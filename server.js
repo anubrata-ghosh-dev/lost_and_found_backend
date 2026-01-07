@@ -1,5 +1,8 @@
 require("dotenv").config();
 
+const https = require("https");
+
+
 const express = require("express");
 const cors = require("cors");
 const multer = require("multer");
@@ -25,6 +28,11 @@ const upload = multer({
 app.use(cors());
 app.use(express.json());
 
+/* keep-alive */
+app.get("/keep-alive", (req, res) => {
+  res.send("OK");
+});
+
 /* logic */
 function isPossibleMatch(lost, found) {
   if (lost.category !== found.category) return false;
@@ -34,11 +42,25 @@ function isPossibleMatch(lost, found) {
   const diffDays = Math.abs(lostDate - foundDate) / (1000 * 60 * 60 * 24);
   if (diffDays > 7) return false;
 /*new*/
-  return found.location_found
+
+ function isPossibleMatch(lost, found) {
+  if (lost.category !== found.category) return false;
+
+  const lostDate = new Date(lost.date_lost);
+  const foundDate = new Date(found.date_found);
+  const diffDays = Math.abs(lostDate - foundDate) / (1000 * 60 * 60 * 24);
+  if (diffDays > 7) return false;
+
+  const lostPlaces = (lost.location_lost || "")
     .toLowerCase()
     .split(",")
-    .map(p=>p.trim());
-    return lostPlaces.some(place=>found.location_found.toLowerCase().include(place));
+    .map(p => p.trim());
+
+  const foundLocation = (found.location_found || "").toLowerCase();
+
+  return lostPlaces.some(place => foundLocation.includes(place));
+}
+
   /*new*/  
 }
 
@@ -267,6 +289,17 @@ app.post("/claim", async (req, res) => {
     res.status(500).json({ approved: false });
   }
 });
+
+/* self ping  */
+setInterval(() => {
+  https
+    .get(`${process.env.BACKEND_URL}/keep-alive`)
+    .on("error", err => {
+      console.error("Keep-alive failed:", err.message);
+    });
+}, 1000 * 60 * 5); // every 5 minutes
+
+
 /*  START  */
 app.listen(PORT, () => {
   console.log(`Server running on ${PORT}`);
