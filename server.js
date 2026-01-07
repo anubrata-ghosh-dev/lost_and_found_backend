@@ -36,44 +36,21 @@ app.get("/keep-alive", (req, res) => {
 /* logic */
 
 function isPossibleMatch(lost, found) {
-  // 1. Category check
-  if (!lost.category || !found.category) return false;
   if (lost.category !== found.category) return false;
 
-  // 2. Date tolerance (soft, optional)
-  let dateScore = true;
-  if (lost.date_lost && found.date_found) {
-    const lostDate = new Date(lost.date_lost);
-    const foundDate = new Date(found.date_found);
-
-    if (!isNaN(lostDate) && !isNaN(foundDate)) {
-      const diffDays =
-        Math.abs(lostDate - foundDate) / (1000 * 60 * 60 * 24);
-      dateScore = diffDays <= 10; // softer window
-    }
-  }
-
-  // 3. Location fuzzy match
-  const lostPlaces = (lost.location_lost || "")
+  const lostDate = new Date(lost.date_lost);
+  const foundDate = new Date(found.date_found);
+  const diffDays = Math.abs(lostDate - foundDate) / (1000 * 60 * 60 * 24);
+  if (diffDays > 7) return false;
+/*new*/
+  return found.location_found
     .toLowerCase()
     .split(",")
-    .map(p => p.trim())
-    .filter(Boolean);
+    .map(p=>p.trim());
+    return lostPlaces.some(place=>found.location_found.toLowerCase().include(place));
 
-  const foundLocation = (found.location_found || "").toLowerCase();
-
-  let locationScore = false;
-  if (lostPlaces.length > 0 && foundLocation) {
-    locationScore = lostPlaces.some(place =>
-      foundLocation.includes(place)
-    );
-  }
-
-  // 4. Final decision (location OR date must match)
-  return locationScore || dateScore;
-}
   /*new*/  
-
+}
 
 function tokenize(text = "") {
   return text
@@ -90,6 +67,7 @@ function keywordScore(foundDesc = "", verifyText = "") {
 }
 
 
+//health
 app.get("/", (_, res) => {
   res.send("Lost & Found backend running");
 });
