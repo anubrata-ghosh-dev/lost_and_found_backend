@@ -9,23 +9,23 @@ const { createClient } = require("@supabase/supabase-js");
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-/* ===================== SUPABASE ===================== */
+/* supabase main */
 const supabase = createClient(
   process.env.SUPABASE_URL,
   process.env.SUPABASE_SERVICE_ROLE_KEY
 );
 
-/* ===================== MULTER ===================== */
+/* multer(image) */
 const upload = multer({
   storage: multer.memoryStorage(),
   limits: { fileSize: 5 * 1024 * 1024 }
 });
 
-/* ===================== GLOBAL MIDDLEWARE ===================== */
+/* main data system */
 app.use(cors());
 app.use(express.json());
 
-/* ===================== MATCHING LOGIC ===================== */
+/* logic */
 function isPossibleMatch(lost, found) {
   if (lost.category !== found.category) return false;
 
@@ -56,12 +56,12 @@ function keywordScore(foundDesc = "", verifyText = "") {
   return b.filter(x => a.includes(x)).length;
 }
 
-/* ===================== HEALTH ===================== */
+
 app.get("/", (_, res) => {
   res.send("Lost & Found backend running");
 });
 
-/* ===================== POST FOUND ITEM ===================== */
+/* post found */
 app.post("/found", upload.single("itemImage"), async (req, res) => {
   try {
     if (!req.body.finderContact) {
@@ -97,7 +97,7 @@ app.post("/found", upload.single("itemImage"), async (req, res) => {
 
     const foundRef = await db.collection("found_items").add(foundItem);
 
-    // 🔍 check existing lost items
+    //  check existing lost items
     const lostSnap = await db
       .collection("lost_items")
       .where("status", "==", "open")
@@ -131,7 +131,7 @@ app.post("/found", upload.single("itemImage"), async (req, res) => {
   }
 });
 
-/* ===================== FOUND LIST ===================== */
+/* LIST FOUND */
 app.get("/found-with-status", async (_, res) => {
   try {
     const foundSnap = await db
@@ -161,7 +161,7 @@ app.get("/found-with-status", async (_, res) => {
   }
 });
 
-/* ===================== POST LOST ITEM ===================== */
+/* POST LOST */
 app.post("/lost", async (req, res) => {
   try {
     const lostItem = {
@@ -209,7 +209,7 @@ app.post("/lost", async (req, res) => {
   }
 });
 
-/* ===================== CLAIM ===================== */
+/*  CLAIM  */
 app.post("/claim", async (req, res) => {
   try {
     const { foundItemId, color, mark, extra } = req.body;
@@ -245,7 +245,7 @@ app.post("/claim", async (req, res) => {
       lostEmail = lostDoc.data()?.user_email || null;
     }
 
-    // ✅ CREATE SIGNED IMAGE URL
+    
     let signedUrl = null;
     if (found.image_path) {
       const { data } = await supabase.storage
@@ -267,7 +267,7 @@ app.post("/claim", async (req, res) => {
     res.status(500).json({ approved: false });
   }
 });
-/* ===================== START ===================== */
+/*  START  */
 app.listen(PORT, () => {
   console.log(`Server running on ${PORT}`);
 });

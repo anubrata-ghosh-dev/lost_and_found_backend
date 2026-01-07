@@ -4,7 +4,7 @@ let serviceAccount;
 
 if (process.env.FIREBASE_SERVICE_ACCOUNT) {
   // Render / production
-  serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
+  serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT.replace(/\\n/g,"\n"));
 } else {
   // Local development
   serviceAccount = require("./serviceAccountKey.json");
